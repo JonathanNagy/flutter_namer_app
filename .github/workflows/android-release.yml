@@ -4,11 +4,15 @@
 name: Android Release
 
 on:
+ # run on push to "main" branch
   push:
-    branches: [ "main" ] # Set to branch
-  pull_request:
-    branches: [ "main" ] # Set to branch
+    branches: [ "main" ]
 
+  # run on pull_request to "main"  branch
+  pull_request:
+    branches: [ "main" ] 
+
+  # allow action to be run from github UI
   workflow_dispatch:
 
 jobs:
@@ -21,46 +25,55 @@ jobs:
       # 1 - checkout source
       - uses: actions/checkout@v3
 
-      # 2 - Get version.txt workflow artifact created by version job
-      - name: Get version.txt
-        uses: actions/download-artifact@v2
-        with:
-          name: gitversion
-
-      # 3 - Create version1.txt file from version.txt without newlines
-      - name: Create new file without newline char from version.txt
-        run: tr -d '\n' < version.txt > version1.txt
-        
-      # 4 - wow, this is kind of involved just to get a version number
-      - name: Read version
-        id: version
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: version1.txt
- 
-      # 5 - set version in pubspec.yaml ?
-      - name: Update version in YAML
-        run: sed -i 's/99.99.99+99/${{ steps.version.outputs.content }}+${{ github.run_number }}/g' pubspec.yaml
- 
-      # 6 - Setup Java environment for Andorid build
+      # 2 - Setup Java environment for Andorid build
       - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: "12.x"
           cache: 'gradle' # speed up java setup
       
-      # 7 - Setup flutter SDK
+      # 3 - Setup flutter SDK
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.10.5"
           channel: 'stable'
           cache: true # speed up flutter sdk setup
       
-      # 8 - Get flutter dependencies
+      # 4 - Get flutter dependencies
       - name: Get dependencies
         run: flutter pub get
 
-      # 9 - run flutter android appbundle build
+      # 5 - Run unit tests!
+      - name: Run unit tests
+        run: flutter test --coverage
+        
+      # 5 - Run integration tests! On second thought, don't, we need a device emulator!
+      # TODO: setup a device emulator and run integration tests
+      # - name: Run integration tests
+      #   run: flutter test integration_test
+        
+      # 6 - Get version.txt workflow artifact created by version job
+      - name: Get version.txt
+        uses: actions/download-artifact@v2
+        with:
+          name: gitversion
+
+      # 7 - Create version1.txt file from version.txt without newlines
+      - name: Create new file without newline char from version.txt
+        run: tr -d '\n' < version.txt > version1.txt
+        
+      # 8 - wow, this is kind of involved just to get a version number
+      - name: Read version
+        id: version
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: version1.txt
+ 
+      # 9 - set version in pubspec.yaml ?
+      - name: Update version in YAML
+        run: sed -i 's/99.99.99+99/${{ steps.version.outputs.content }}+${{ github.run_number }}/g' pubspec.yaml
+
+      # 10 - run flutter android appbundle build
       - name: Start release build
         run: flutter build appbundle
 
