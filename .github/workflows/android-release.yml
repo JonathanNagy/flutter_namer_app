@@ -3,60 +3,60 @@
 # Substito repository: https://github.com/subosito/flutter-action
 name: Android Release
 
-# 1
 on:
-  # 2
   push:
     branches: [ "main" ] # Set to branch
   pull_request:
     branches: [ "main" ] # Set to branch
 
-  # 3
   workflow_dispatch:
 
-# 4
 jobs:
-  # 5 - Jobs run in parallel, so the numbering here is kind of silly
   build:
-    # 6
+    name: Create Android Build
+    needs: version # by default jobs run in parallel. set version job as depencdency to version.txt is created for build job. 
     runs-on: ubuntu-latest
 
-    # 7
     steps:
-      # 8
+      # 1 - checkout source
       - uses: actions/checkout@v3
-      # 9
+
+      # 2 - Setup Java environment for Andorid build
       - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: "12.x"
           cache: 'gradle' # speed up java setup
-      # 10   
+      
+      # 3 - Setup flutter SDK
       - uses: subosito/flutter-action@v2
         with:
-          # 11
           flutter-version: "3.10.5"
           channel: 'stable'
           cache: true # speed up flutter sdk setup
-      # 12
+      
+      # 4 - Get flutter dependencies
       - name: Get dependencies
         run: flutter pub get
 
-      # Runs a set of commands using the runners shell
+      # 5 - run flutter android appbundle build
       - name: Start release build
         run: flutter build appbundle
-  # 13
+
   version:
       name: Create version number
       # The type of runner that the job will run on
       runs-on: ubuntu-latest
       # Steps represent a sequence of tasks that will be executed as part of the job
       steps:
+        
+        # 1 - checkout source
         - uses: actions/checkout@v3
           with:
             fetch-depth: 0 # Needed to avoid commit not found GitVersion error, borrowed from https://github.com/GitTools/actions/blob/main/docs/examples/github/gitversion/setup/usage-examples.md
             # Full error: GitVersion.GitVersionException: Cannot find commit 5c61deb comment. Please ensure that the repository is an unshallow clone with `git fetch --unshallow`.
-        # 14
+
+        # 2 - Install gitversion
         - name: Install GitVersion
           uses: gittools/actions/gitversion/setup@v0.10.2
           with:
@@ -65,10 +65,12 @@ jobs:
         - name: Use GitVersion
           id: gitversion
           uses: gittools/actions/gitversion/execute@v0.10.2
-        # 15
+
+        # 3 - Create version.txt
         - name: Create version.txt with nuGetVersion
           run: echo ${{ steps.gitversion.outputs.nuGetVersion  }} > version.txt
-        # 16
+
+        # 4 - Upload version.txt to workflow artifacts
         - name: Upload version.txt
           uses: actions/upload-artifact@v2
           with:
