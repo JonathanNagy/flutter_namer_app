@@ -54,7 +54,8 @@ jobs:
       steps:
         - uses: actions/checkout@v3
           with:
-            fetch-depth: 0 # https://github.com/GitTools/actions/blob/main/docs/examples/github/gitversion/setup/usage-examples.md
+            fetch-depth: 0 # Needed to avoid commit not found GitVersion error, borrowed from https://github.com/GitTools/actions/blob/main/docs/examples/github/gitversion/setup/usage-examples.md
+            # Full error: GitVersion.GitVersionException: Cannot find commit 5c61deb comment. Please ensure that the repository is an unshallow clone with `git fetch --unshallow`.
         # 14
         - name: Install GitVersion
           uses: gittools/actions/gitversion/setup@v0.10.2
