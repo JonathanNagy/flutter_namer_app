@@ -16,7 +16,7 @@ on:
 
 # 4
 jobs:
-  # 5
+  # 5 - Jobs run in parallel, so the numbering here is kind of silly
   build:
     # 6
     runs-on: ubuntu-latest
