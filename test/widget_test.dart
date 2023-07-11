@@ -10,22 +10,28 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_namer_app/main.dart';
 
+import 'test_utils.dart';
+
 void main() {
-  // This is broke, fix it dummy!
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('Like button smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify the favorite border icon is shown
+    expect(find.byIcon(Icons.favorite_border), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Finds the like button button to tap on.
+    final likeButtonText = widgetWithText<ElevatedButton>('Like');
+    expect(likeButtonText, findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Emulate a tap on the floating action button.
+    await tester.tap(likeButtonText);
+
+    // Trigger a frame.
+    await tester.pumpAndSettle();
+
+    // Verify the like button icon is updated.
+    expect(find.byIcon(Icons.favorite_border), findsNothing);
+    expect(widgetWithIcon<ElevatedButton>(Icons.favorite), findsOneWidget);
   });
 }
