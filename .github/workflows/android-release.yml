@@ -25,60 +25,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1 - checkout source
+      # checkout source
       - uses: actions/checkout@v3
 
-      # 2 - Setup Java environment for Andorid build
+      # Setup Java environment for Andorid build
       - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: "12.x"
           cache: 'gradle' # speed up java setup
       
-      # 3 - Setup flutter SDK
+      # Setup flutter SDK
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.10.5"
           channel: 'stable'
           cache: true # speed up flutter sdk setup
       
-      # 4 - Get flutter dependencies
+      # Get flutter dependencies
       - name: Get dependencies
         run: flutter pub get
 
-      # 5 - Run unit tests!
+      # Analyze flutter project
+      - name: Analyze project
+        run: flutter analyze
+
+      # Run unit tests!
       - name: Run unit tests
         run: flutter test --coverage
         
-      # 5 - Run integration tests! On second thought, don't, we need a device emulator!
+      # Run integration tests! On second thought, don't, we need a device emulator!
       # TODO: setup a device emulator and run integration tests
       # - name: Run integration tests
       #   run: flutter test integration_test
         
-      # 6 - Get version.txt workflow artifact created by version job
+      # Get version.txt workflow artifact created by version job
       - name: Get version.txt
         uses: actions/download-artifact@v2
         with:
           name: gitversion
 
-      # 7 - Create version1.txt file from version.txt without newlines
+      # Create version1.txt file from version.txt without newlines
       - name: Create new file without newline char from version.txt
         run: tr -d '\n' < version.txt > version1.txt
         
-      # 8 - wow, this is kind of involved just to get a version number
+      # wow, this is kind of involved just to get a version number
       - name: Read version
         id: version
         uses: juliangruber/read-file-action@v1
         with:
           path: version1.txt
  
-      # 9 - set version in pubspec.yaml ?
+      # set version in pubspec.yaml
       - name: Update version in YAML
         run: sed -i 's/99.99.99+99/${{ steps.version.outputs.content }}+${{ github.run_number }}/g' pubspec.yaml
 
-      # 10 - run flutter android appbundle build
+      # run flutter android appbundle build
       - name: Start release build
-        run: flutter build appbundle
+        run: flutter build apk --release
+
+      # Create release?
+      - uses: ncipollo/release-action@v1
+        with: 
+          artifacts: "build/app/outputs/flutter-apk/*.apk"
+          token: $
 
   version:
       name: Create version number
@@ -87,13 +97,13 @@ jobs:
       # Steps represent a sequence of tasks that will be executed as part of the job
       steps:
         
-        # 1 - checkout source
+        # checkout source
         - uses: actions/checkout@v3
           with:
             fetch-depth: 0 # Needed to avoid commit not found GitVersion error, borrowed from https://github.com/GitTools/actions/blob/main/docs/examples/github/gitversion/setup/usage-examples.md
             # Full error: GitVersion.GitVersionException: Cannot find commit 5c61deb comment. Please ensure that the repository is an unshallow clone with `git fetch --unshallow`.
 
-        # 2 - Install gitversion
+        # Install gitversion
         - name: Install GitVersion
           uses: gittools/actions/gitversion/setup@v0.10.2
           with:
@@ -103,11 +113,11 @@ jobs:
           id: gitversion
           uses: gittools/actions/gitversion/execute@v0.10.2
 
-        # 3 - Create version.txt
+        # Create version.txt
         - name: Create version.txt with nuGetVersion
           run: echo ${{ steps.gitversion.outputs.nuGetVersion  }} > version.txt
 
-        # 4 - Upload version.txt to workflow artifacts
+        # Upload version.txt to workflow artifacts
         - name: Upload version.txt
           uses: actions/upload-artifact@v2
           with:
