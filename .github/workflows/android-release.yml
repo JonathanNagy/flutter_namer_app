@@ -2,8 +2,8 @@
 # Substito flutter-action: https://github.com/marketplace/actions/flutter-action
 # Substito repository: https://github.com/subosito/flutter-action
 # Added unit tests with: https://betterprogramming.pub/creating-a-complete-github-workflow-for-flutter-529f6bd7bb10
-# reading todo: https://petercoding.com/flutter/2021/07/18/using-github-actions-with-flutter/
-# more reading todo: https://medium.com/mobile-development-group/github-actions-for-flutter-cf02923d7b5d
+# Output to APK and create github release: https://petercoding.com/flutter/2021/07/18/using-github-actions-with-flutter/
+# just upload, not release: https://medium.com/mobile-development-group/github-actions-for-flutter-cf02923d7b5d
 name: Android Release
 
 on:
@@ -88,7 +88,6 @@ jobs:
       - uses: ncipollo/release-action@v1
         with: 
           artifacts: "build/app/outputs/flutter-apk/*.apk"
-          token: $
 
   version:
       name: Create version number
